@@ -314,6 +314,25 @@ int main(int argc, char* argv)
         printf("%d,%c\n",cnt,cht_buffer[u2g_lib_rb_Deque(&stt_rblist)]);
         cnt++;
     }
+
+    printf("Enque!OverWrite!\n");
+    while(eng_lib_rb_stRead(stt_rblist) != LIB_RB_RBFULL)
+    {
+        cht_buffer[u2g_lib_rb_Enque(&stt_rblist)] =  '0' + (cnt % 10);
+        cnt++;
+    }
+    /// OverWrite
+    for (cnt = 0; cnt < 16; cnt++)
+    {
+        cht_buffer[u2g_lib_rb_Enque(&stt_rblist)] =  '0' + (cnt % 10);
+    }
+    cnt = 0;
+    while(eng_lib_rb_stRead(stt_rblist) != LIB_RB_RBEMPTY)
+    {
+        printf("%d,%c\n",cnt,cht_buffer[u2g_lib_rb_Deque(&stt_rblist)]);
+        cnt++;
+    }
+
     return 0;
 }
 
