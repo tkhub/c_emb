@@ -5,7 +5,8 @@
 /// @date           2019.12.04
 /// $Version:       V1.0$
 /// $Revision:      R0.0$
-/// @note           ファイルに備考などを明記する場合はここへ書き込む
+/// @note           このライブラリでは、バッファそのものは扱わない。
+///                 バッファのインデックスを操作するのみ
 /// @attention      ファイルに注意書きなどを明記する場合はここへ書き込む
 /// @par            History
 ///                 ファイルに履歴などを明記する場合はここへ書き込む
@@ -65,6 +66,15 @@
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
+#ifdef __TERMSIM_DEBUG__
+/////////////////////////////////////////////////////////////////////////////////
+/// @def        TEST_RB_LEN
+/// @brief      テスト用のバッファサイズ
+///
+////////////////////////////////////////////////////////////////////////////////
+#define     TEST_RB_LEN 64
+#endif /* __TERMSIM_DEBUG__ */
+
 /*****************************************************************************/
 /*****************************************************************************/
 /* クラス */
@@ -121,6 +131,149 @@
 /* グローバル関数定義 */
 /*****************************************************************************/
 /*****************************************************************************/
+////////////////////////////////////////////////////////////////////////////////
+/// @brief          vdg_lib_rb_Init
+/// @fn             バッファ制御の初期化
+/// @param[in]      (u2t_sizemax)   バッファサイズ
+/// @param[out]     (stt_rb)        バッファの構造体
+/// @return         なし
+/// @author         関数作成者名
+/// @date           関数作成年月日
+/// @version        関数やソースにバージョンを明記する場合はここへ書き込む
+/// @note           関数に備考などを明記する場合はここへ書き込む
+/// @attention      関数に注意書きなどを明記する場合はここへ書き込む
+/// @par            History
+///                 ファイルに履歴などを明記する場合はここへ書き込む
+///
+////////////////////////////////////////////////////////////////////////////////
+void vdg_lib_rb_Init(st_lib_rblist* stt_rb, const u2 u2t_sizemax)
+{
+    stt_rb->u2_head = 0;
+    stt_rb->u2_tail = 0;
+    stt_rb->s4_use = 0;
+    stt_rb->u2_sizemax = u2t_sizemax;
+    stt_rb->en_rbst = LIB_RB_RBEMPTY;
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief          u2g_lib_rb_Enque
+/// @fn             バッファに入れる
+/// @param[out]     (stt_rb)        バッファ制御用の構造体
+/// @return         バッファエンキュー用インデックス
+/// @author         関数作成者名
+/// @date           関数作成年月日
+/// @version        関数やソースにバージョンを明記する場合はここへ書き込む
+/// @note           buffer[u2g_lib_rb_Enque(&stt_rb)] = 1234;
+/// @attention      関数に注意書きなどを明記する場合はここへ書き込む
+/// @par            History
+///                 ファイルに履歴などを明記する場合はここへ書き込む
+///
+////////////////////////////////////////////////////////////////////////////////
+u2 u2g_lib_rb_Enque(st_lib_rblist* stt_rb)
+{
+    u2 u2t_head;
+    s4 s4t_use;
+    u2 u2t_sizemax;
+    en_lib_rb_rbState ent_st;
+    u2t_head    = stt_rb->u2_head;
+    s4t_use     = stt_rb->s4_use;
+    u2t_sizemax = stt_rb->u2_sizemax;
+    /// 先端を進める
+    u2t_head = (u2t_head + 1) % u2t_sizemax;
+
+    /// 使用サイズを増やす
+    s4t_use++;
+
+    if (s4t_use >= u2t_sizemax)
+    {
+        /// バッファがフルか判定する。
+        ent_st = LIB_RB_RBFULL;
+    }
+    else if (s4t_use <= 0)
+    {
+        /// バッファが空か判定する。
+        ent_st = LIB_RB_RBEMPTY;
+    }
+    else
+    {
+        ent_st = LIB_RB_RBNONEMPFLL;
+    }
+    stt_rb->u2_head = u2t_head;
+    stt_rb->s4_use = s4t_use;
+    stt_rb->en_rbst = ent_st;
+    return u2t_head;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief          u2g_lib_rb_Deque
+/// @fn             バッファから取り出す
+/// @param[out]     (stt_rb)        バッファ制御用の構造体
+/// @return         バッファデキュー用インデックス
+/// @author         関数作成者名
+/// @date           関数作成年月日
+/// @version        関数やソースにバージョンを明記する場合はここへ書き込む
+/// @note           temp = buffer[u2g_lib_rb_Enque(&stt_rb)];
+/// @attention      関数に注意書きなどを明記する場合はここへ書き込む
+/// @par            History
+///                 ファイルに履歴などを明記する場合はここへ書き込む
+///
+////////////////////////////////////////////////////////////////////////////////
+u2  u2g_lib_rb_Deque(st_lib_rblist* stt_rb)
+{
+    u2 u2t_tail;
+    s4 s4t_uselen;
+    u2 u2t_size;
+    en_lib_rb_rbState ent_rbst;
+
+    u2t_tail = stt_rb->u2_tail;
+    s4t_uselen = stt_rb->s4_use;
+    u2t_size = stt_rb->u2_sizemax;
+
+    u2t_tail = (u2t_tail + 1) % u2t_size;
+    s4t_uselen--;
+
+    if (s4t_uselen <= 0)
+    {
+        ent_rbst = LIB_RB_RBEMPTY;
+    }
+    else if (s4t_uselen >= u2t_size)
+    {
+        ent_rbst = LIB_RB_RBFULL;
+    }
+    else
+    {
+        ent_rbst = LIB_RB_RBNONEMPFLL;
+    }
+    stt_rb->u2_tail= u2t_tail;
+    stt_rb->s4_use = s4t_uselen;
+    stt_rb->en_rbst = ent_rbst;
+    return u2t_tail;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief          eng_lib_rb_stRead
+/// @fn             バッファの状態を読み出す
+/// @param[in]      (stt_rb)        バッファ制御用の構造体
+/// @return         バッファの状態
+/// @author         関数作成者名
+/// @date           関数作成年月日
+/// @version        関数やソースにバージョンを明記する場合はここへ書き込む
+/// @note           特になし
+/// @attention      関数に注意書きなどを明記する場合はここへ書き込む
+/// @par            History
+///                 ファイルに履歴などを明記する場合はここへ書き込む
+///
+////////////////////////////////////////////////////////////////////////////////
+en_lib_rb_rbState  eng_lib_rb_stRead(st_lib_rblist stt_rb)
+{
+    return stt_rb.en_rbst;
+}
+
+void vdg_lib_rb_stFwrite(st_lib_rblist* stt_rb, en_lib_rb_rbState ent_st)
+{
+    stt_rb->en_rbst = ent_st;
+}
 
 #ifdef __TERMSIM_DEBUG__
 ////////////////////////////////////////////////////////////////////////////////
@@ -140,7 +293,27 @@
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char* argv)
 {
-    printf("Hello sekai!\n");
+    int cnt;
+    st_lib_rblist stt_rblist;
+    char cht_buffer[TEST_RB_LEN];
+
+    printf("Init RB\n");
+    vdg_lib_rb_Init(&stt_rblist, TEST_RB_LEN);
+
+    printf("Enque!");
+    while(eng_lib_rb_stRead(stt_rblist) != LIB_RB_RBFULL)
+    {
+        cht_buffer[u2g_lib_rb_Enque(&stt_rblist)] =  '0' + (cnt % 10);
+        cnt++;
+    }
+
+    cnt = 0;
+    printf("Deque!");
+    while(eng_lib_rb_stRead(stt_rblist) != LIB_RB_RBEMPTY)
+    {
+        printf("%d,%c\n",cnt,cht_buffer[u2g_lib_rb_Deque(&stt_rblist)]);
+        cnt++;
+    }
     return 0;
 }
 
