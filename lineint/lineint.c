@@ -140,11 +140,33 @@
 ///                 ファイルに履歴などを明記する場合はここへ書き込む
 ///
 ////////////////////////////////////////////////////////////////////////////////
-f4 f4g_lib_intrp1dim(const s4, const s4*, const u2)
+f4 f4g_lib_intrp1dim(const s4 s4t_x, const s4* s4t_tbl, const u2 u2t_tblhlflen)
 {
-
+    u4 u4t_search;
+    if      (s4t_x < s4t_tbl[0])
+    {
+        return s4t_tbl[u2t_tblhlflen];
+    }
+    else if (s4t_tbl[u2t_tblhlflen -1] < s4t_x)
+    {
+        return s4t_tbl[(u2t_tblhlflen * 2)- 1];
+    }
+    else
+    {
+        for (u4t_search = 1; u4t_search < u2t_tblhlflen; u4t_search++)
+        {
+            if (s4t_tbl[u4t_search] >= s4t_x)
+            {
+                break;
+            }
+        }
+        return  (float)s4t_tbl[u4t_search + u2t_tblhlflen -1] 
+                + (((s4t_tbl[u4t_search + u2t_tblhlflen] - s4t_tbl[u4t_search + u2t_tblhlflen -1]) * (s4t_x - s4t_tbl[u4t_search - 1]) ) 
+                / (s4t_tbl[u4t_search] - s4t_tbl[u4t_search - 1]));
+    }
 }
 
+#ifdef __TERMSIM_DEBUG__
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief          関数の説明
 /// @fn             関数名
@@ -161,7 +183,21 @@ f4 f4g_lib_intrp1dim(const s4, const s4*, const u2)
 ///
 ////////////////////////////////////////////////////////////////////////////////
 
+int main(void)
+{
+    s4 x;
+    s4 tbl[]={
+        -10, 0, 10, 20, 30,
+        -50, -20, 100, 200, 300
+    };
+    for (x = -15; x < 40; x += 5)
+    {
+        printf("%d,%f\n",x,f4g_lib_intrp1dim(x, tbl, (sizeof(tbl)/sizeof(tbl[0]) / 2)) );
+    }
 
+    return 0;
+}
+#endif /*  __TERMSIM_DEBUG__ */
 /*****************************************************************************/
 /*****************************************************************************/
 /* 内部関数定義 */
