@@ -31,7 +31,7 @@
 /// @def    __TERMSIM_DEBUG__
 /// @brief  PC上でのシミュレーションで有効にする。
 ////////////////////////////////////////////////////////////////////////////////
-/// #define __TERMSIM_DEBUG__
+#define __TERMSIM_DEBUG__
 
 #ifdef __TERMSIM_DEBUG__
 #include <stdio.h>
@@ -122,6 +122,9 @@
 /* 内部関数宣言 */
 /*****************************************************************************/
 /*****************************************************************************/
+#ifdef __TERMSIM_DEBUG__
+static void vds_lib_rb_mon(st_lib_rblist stt_rbst);
+#endif /* __TERMSIM_DEBUG__ */
 
 /*****************************************************************************/
 /*****************************************************************************/
@@ -258,7 +261,7 @@ u2  u2g_lib_rb_Deque(st_lib_rblist* stt_rb)
     {
         ent_rbst = LIB_RB_RBEMPTY;
     }
-    else if (s4t_uselen >= u2t_size)
+    else if (s4t_uselen >= (u2t_size -1))
     {
         ent_rbst = LIB_RB_RBFULL;
         s4t_uselen--;
@@ -274,6 +277,8 @@ u2  u2g_lib_rb_Deque(st_lib_rblist* stt_rb)
     stt_rb->en_rbst = ent_rbst;
     return u2t_tail;
 }
+
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// @brief          eng_lib_rb_stRead
@@ -294,15 +299,115 @@ en_lib_rb_rbState  eng_lib_rb_stRead(st_lib_rblist stt_rb)
     return stt_rb.en_rbst;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// @brief          vdg_lib_rb_stFwrite
+/// @fn             バッファの状態を強制的に設定する
+/// @param[out]     (stt_rb)        バッファ制御用の構造体
+/// @param[in]      (ent_st)        バッファに書き込む状態
+/// @return         バッファの状態
+/// @author         関数作成者名
+/// @date           関数作成年月日
+/// @version        関数やソースにバージョンを明記する場合はここへ書き込む
+/// @note           特になし
+/// @attention      関数に注意書きなどを明記する場合はここへ書き込む
+/// @par            History
+///                 ファイルに履歴などを明記する場合はここへ書き込む
+///
+////////////////////////////////////////////////////////////////////////////////
 void vdg_lib_rb_stFwrite(st_lib_rblist* stt_rb, en_lib_rb_rbState ent_st)
 {
     stt_rb->en_rbst = ent_st;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+/// @brief          u2g_lib_rb_read
+/// @fn             バッファの先頭をデキューせず読み出す。
+/// @param[in]     (stt_rb)        バッファ制御用の構造体
+/// @param[in]     (u2t_past)      バッファを遡る長さ
+/// @return         バッファインデックス
+/// @author         関数作成者名
+/// @date           関数作成年月日
+/// @version        関数やソースにバージョンを明記する場合はここへ書き込む
+/// @note           temp = buffer[u2g_lib_rb_Enque(&stt_rb)];
+/// @attention      関数に注意書きなどを明記する場合はここへ書き込む
+/// @par            History
+///                 ファイルに履歴などを明記する場合はここへ書き込む
+///
+////////////////////////////////////////////////////////////////////////////////
+u2 u2g_lib_rb_read(const st_lib_rblist stt_rblist, u2 u2t_past)
+{
+    u2 u2t_head;
+    u2 u2t_tail;
+    u2 u2t_pasttmp;
+    u2 u2t_index;
+    s4 s4t_uselen;
+    u2 u2t_size;
+
+    u2t_head = stt_rblist.u2_head;
+    u2t_tail = stt_rblist.u2_tail +1;
+    s4t_uselen = stt_rblist.s4_use;
+    u2t_size = stt_rblist.u2_sizemax;
+    if (u2t_past >= (s4t_uselen))
+    {
+        u2t_pasttmp = (s4t_uselen -1);
+    }
+    else
+    {
+        u2t_pasttmp = u2t_past;
+    }
+    
+    u2t_index = (u2t_tail + u2t_pasttmp) % u2t_size;
+    return u2t_index;   
+
+}
+
+////////////////////////////////////////////////////////////////////////////////
+/// @brief          vdg_lib_rb_stUpdate
+/// @fn             バッファ状態を更新する
+/// @param[out]     (stt_rb)        バッファ制御用の構造体
+/// @return         void
+/// @author         関数作成者名
+/// @date           関数作成年月日
+/// @version        関数やソースにバージョンを明記する場合はここへ書き込む
+/// @note           temp = buffer[u2g_lib_rb_Enque(&stt_rb)];
+/// @attention      関数に注意書きなどを明記する場合はここへ書き込む
+/// @par            History
+///                 ファイルに履歴などを明記する場合はここへ書き込む
+///
+////////////////////////////////////////////////////////////////////////////////
+void vdg_lib_rb_stUpdate(st_lib_rblist* stt_rbst)
+{
+    s4 s4t_uselen;
+    u2 u2t_size;
+    en_lib_rb_rbState ent_rbst;
+
+    s4t_uselen = stt_rbst->s4_use;
+    u2t_size = stt_rbst->u2_sizemax;
+    ent_rbst = stt_rbst->en_rbst;
+    
+    if (s4t_uselen <= 0)
+    {
+        ent_rbst = LIB_RB_RBEMPTY;
+    }
+    else if (s4t_uselen >= (u2t_size -1))
+    {
+        ent_rbst = LIB_RB_RBFULL;
+    }
+    else
+    {
+        ent_rbst = LIB_RB_RBNONEMPFLL;
+    }
+    stt_rbst->en_rbst = ent_rbst;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////
+/// テスト用のmain関数
+
 #ifdef __TERMSIM_DEBUG__
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief          関数の説明
-/// @fn             関数名
+/// @brief          main
+/// @fn             テスト用メイン関数
 /// @param[in]      引数(参照専用)
 /// @param[out]     引数(ポインタ引数等)
 /// @return         関数戻り値の説明
@@ -373,6 +478,32 @@ int main(int argc, char* argv)
         printf("%d,%c\n",cnt,cht_buffer[u2g_lib_rb_Deque(&stt_rblist)]);
         cnt++;
     }
+    vds_lib_rb_mon(stt_rblist);
+    printf("Only Read Test\n");
+    for (cnt = 0; cnt < 5; cnt++)
+    {
+        cht_buffer[u2g_lib_rb_Enque(&stt_rblist)] =  '!' + cnt;
+    }
+    vds_lib_rb_mon(stt_rblist);
+    printf("[");
+    for (cnt = 0; cnt < TEST_RB_LEN; cnt++)
+    {
+        printf("%c, ", cht_buffer[cnt]);
+    }
+    printf("]\n");
+    for (cnt = 0; cnt < 8; cnt++)
+    {
+        printf("%d,%c\n",cnt,cht_buffer[u2g_lib_rb_read(stt_rblist,cnt)]);
+    }
+
+    printf("Fwrite and update chek\n");
+    vds_lib_rb_mon(stt_rblist);
+    vdg_lib_rb_stFwrite(&stt_rblist, LIB_RB_RBFULL);
+    vds_lib_rb_mon(stt_rblist);
+    vdg_lib_rb_stFwrite(&stt_rblist, LIB_RB_RBEMPTY);
+    vds_lib_rb_mon(stt_rblist);
+    vdg_lib_rb_stUpdate(&stt_rblist);
+    vds_lib_rb_mon(stt_rblist);
 
     return 0;
 }
@@ -385,11 +516,11 @@ int main(int argc, char* argv)
 /*****************************************************************************/
 /*****************************************************************************/
 
+#ifdef __TERMSIM_DEBUG__
 ////////////////////////////////////////////////////////////////////////////////
-/// @brief          関数の説明
-/// @fn             関数名
-/// @param[in]      引数(参照専用)
-/// @param[out]     引数(ポインタ引数等)
+/// @brief          モニタ用テスト関数
+/// @fn             vds_lib_rb_mon
+/// @param[in]      stt_rbst 
 /// @return         関数戻り値の説明
 /// @author         関数作成者名
 /// @date           関数作成年月日
@@ -400,5 +531,27 @@ int main(int argc, char* argv)
 ///                 ファイルに履歴などを明記する場合はここへ書き込む
 ///
 ////////////////////////////////////////////////////////////////////////////////
+void vds_lib_rb_mon(st_lib_rblist stt_rbst)
+{
+    printf ("head = %d, tail = %d, size = %d, use = %d, ",      stt_rbst.u2_head, 
+                                                                stt_rbst.u2_tail, 
+                                                                stt_rbst.u2_sizemax, 
+                                                                stt_rbst.s4_use);
+    if      (stt_rbst.en_rbst == LIB_RB_RBEMPTY)
+    {
+        printf("state = EMPTY");
+    }
+    else if (stt_rbst.en_rbst == LIB_RB_RBFULL)
+    {
+        printf("state = FULL");
+    }
+    else
+    {
+        printf("state = NOT FULL/EMPTY");
+    }
+    printf("\n");
+    
+}
+#endif /* __TERMSIM_DEBUG__ */
 
 /*********************EOF******************************************************/

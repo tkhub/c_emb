@@ -128,7 +128,8 @@ __GLOBAL u2                 u2g_lib_rb_Enque(st_lib_rblist*);
 __GLOBAL u2                 u2g_lib_rb_Deque(st_lib_rblist*);
 __GLOBAL en_lib_rb_rbState  eng_lib_rb_stRead(const st_lib_rblist);
 __GLOBAL void               vdg_lib_rb_stFwrite(st_lib_rblist*, en_lib_rb_rbState);
-
+__GLOBAL u2                 u2g_lib_rb_read(const st_lib_rblist,u2);
+__GLOBAL void               vdg_lib_rb_stUpdate(st_lib_rblist*);
 /*****************************************************************************/
 /*****************************************************************************/
 /* 変数定義 */
