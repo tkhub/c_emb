@@ -27,7 +27,12 @@
 /*****************************************************************************/
 #include "../comm/typedef.h"
 
-#define __TERMSIM_DEBUG__
+////////////////////////////////////////////////////////////////////////////////
+/// @def    __TERMSIM_DEBUG__
+/// @brief  PC上でのシミュレーションで有効にする。
+////////////////////////////////////////////////////////////////////////////////
+/// #define __TERMSIM_DEBUG__
+
 #ifdef __TERMSIM_DEBUG__
 #include <stdio.h>
 #endif /*__TERMSIM_DEBUG__*/
@@ -72,7 +77,7 @@
 /// @brief      テスト用のバッファサイズ
 ///
 ////////////////////////////////////////////////////////////////////////////////
-#define     TEST_RB_LEN 64
+#define     TEST_RB_LEN 16
 #endif /* __TERMSIM_DEBUG__ */
 
 /*****************************************************************************/
@@ -173,33 +178,43 @@ void vdg_lib_rb_Init(st_lib_rblist* stt_rb, const u2 u2t_sizemax)
 u2 u2g_lib_rb_Enque(st_lib_rblist* stt_rb)
 {
     u2 u2t_head;
+    u2 u2t_tail;
     s4 s4t_use;
     u2 u2t_sizemax;
     en_lib_rb_rbState ent_st;
     u2t_head    = stt_rb->u2_head;
+    u2t_tail    = stt_rb->u2_tail;
     s4t_use     = stt_rb->s4_use;
     u2t_sizemax = stt_rb->u2_sizemax;
     /// 先端を進める
     u2t_head = (u2t_head + 1) % u2t_sizemax;
 
-    /// 使用サイズを増やす
-    s4t_use++;
-
-    if (s4t_use >= u2t_sizemax)
+    if (ent_st == LIB_RB_RBFULL)
     {
-        /// バッファがフルか判定する。
+        /// バッファがフルを超えていたら後端もずらす。
+        u2t_tail++;
+    }
+
+    /// バッファがフルか判定する。
+    if (s4t_use >= (u2t_sizemax -1))
+    {
         ent_st = LIB_RB_RBFULL;
     }
+    /// バッファが空か判定する。
     else if (s4t_use <= 0)
     {
-        /// バッファが空か判定する。
+        /// 使用サイズを増やす
+        s4t_use++;
         ent_st = LIB_RB_RBEMPTY;
     }
     else
     {
+        /// 使用サイズを増やす
+        s4t_use++;
         ent_st = LIB_RB_RBNONEMPFLL;
     }
     stt_rb->u2_head = u2t_head;
+    stt_rb->u2_tail = u2t_tail;
     stt_rb->s4_use = s4t_use;
     stt_rb->en_rbst = ent_st;
     return u2t_head;
@@ -221,17 +236,23 @@ u2 u2g_lib_rb_Enque(st_lib_rblist* stt_rb)
 ////////////////////////////////////////////////////////////////////////////////
 u2  u2g_lib_rb_Deque(st_lib_rblist* stt_rb)
 {
+    u2 u2t_head;
     u2 u2t_tail;
     s4 s4t_uselen;
     u2 u2t_size;
     en_lib_rb_rbState ent_rbst;
 
+    u2t_head = stt_rb->u2_head;
     u2t_tail = stt_rb->u2_tail;
     s4t_uselen = stt_rb->s4_use;
     u2t_size = stt_rb->u2_sizemax;
 
     u2t_tail = (u2t_tail + 1) % u2t_size;
-    s4t_uselen--;
+    if (ent_rbst == LIB_RB_RBEMPTY)
+    {
+        /// バッファがエンプティを超えていたら先端もずらす
+        u2t_head++;
+    }
 
     if (s4t_uselen <= 0)
     {
@@ -240,12 +261,15 @@ u2  u2g_lib_rb_Deque(st_lib_rblist* stt_rb)
     else if (s4t_uselen >= u2t_size)
     {
         ent_rbst = LIB_RB_RBFULL;
+        s4t_uselen--;
     }
     else
     {
+        s4t_uselen--;
         ent_rbst = LIB_RB_RBNONEMPFLL;
     }
-    stt_rb->u2_tail= u2t_tail;
+    stt_rb->u2_head = u2t_head;
+    stt_rb->u2_tail = u2t_tail;
     stt_rb->s4_use = s4t_uselen;
     stt_rb->en_rbst = ent_rbst;
     return u2t_tail;
@@ -300,32 +324,49 @@ int main(int argc, char* argv)
     printf("Init RB\n");
     vdg_lib_rb_Init(&stt_rblist, TEST_RB_LEN);
 
-    printf("Enque!");
+    printf("Enque!\n");
     while(eng_lib_rb_stRead(stt_rblist) != LIB_RB_RBFULL)
     {
-        cht_buffer[u2g_lib_rb_Enque(&stt_rblist)] =  '0' + (cnt % 10);
+        cht_buffer[u2g_lib_rb_Enque(&stt_rblist)] =  'a' + (cnt % 29);
         cnt++;
     }
 
+    printf("[");
+    for (cnt = 0; cnt < TEST_RB_LEN; cnt++)
+    {
+        printf("%c, ", cht_buffer[cnt]);
+    }
+    printf("]\n");
+
     cnt = 0;
-    printf("Deque!");
+    printf("Deque!\n");
     while(eng_lib_rb_stRead(stt_rblist) != LIB_RB_RBEMPTY)
     {
         printf("%d,%c\n",cnt,cht_buffer[u2g_lib_rb_Deque(&stt_rblist)]);
         cnt++;
-    }
+    }  
 
-    printf("Enque!OverWrite!\n");
+    cnt = 0;
+    printf("Enque\n");
     while(eng_lib_rb_stRead(stt_rblist) != LIB_RB_RBFULL)
     {
-        cht_buffer[u2g_lib_rb_Enque(&stt_rblist)] =  '0' + (cnt % 10);
+        cht_buffer[u2g_lib_rb_Enque(&stt_rblist)] =  'A' + (cnt % 29);
         cnt++;
     }
+    printf("OverWrite!\n");
     /// OverWrite
-    for (cnt = 0; cnt < 16; cnt++)
+    for (cnt = 0; cnt < 5; cnt++)
     {
         cht_buffer[u2g_lib_rb_Enque(&stt_rblist)] =  '0' + (cnt % 10);
     }
+    
+    printf("[");
+    for (cnt = 0; cnt < TEST_RB_LEN; cnt++)
+    {
+        printf("%c, ", cht_buffer[cnt]);
+    }
+    printf("]\n");
+
     cnt = 0;
     while(eng_lib_rb_stRead(stt_rblist) != LIB_RB_RBEMPTY)
     {
